@@ -1,6 +1,7 @@
 print("versik loader v4")
 
 local FILE = "versik/key.txt"
+local FALLBACK = "https://raw.githubusercontent.com/shyoma30/Verstik/refs/heads/main/AP.lua"
 
 local function trim(s)
     return (tostring(s or ""):gsub("%s+", ""))
@@ -36,14 +37,22 @@ end
 
 local function run()
     local urls = {
-        [142823291]       = "https://pastebin.com/raw/sCTg2jJc", -- mm2
+        [142823291] = "https://pastebin.com/raw/sCTg2jJc", -- mm2
         [155615604] = "https://raw.githubusercontent.com/shyoma30/Verstik/refs/heads/main/Prisonlife.lua",
-        [537413528]       = "https://your-real-url-here",
+        [537413528] = "https://your-real-url-here",
     }
+
     local u = urls[game.PlaceId]
-    if not u then return warn("[Panda] No script for place " .. game.PlaceId) end
-    local fn, err = loadstring(game:HttpGet(u))
+    if not u or u:find("your%-real%-url%-here") then
+        u = FALLBACK
+    end
+
+    local okGet, src = pcall(game.HttpGet, game, u)
+    if not okGet then return warn("[Panda] Fetch failed: " .. tostring(src)) end
+
+    local fn, err = loadstring(src)
     if not fn then return warn("[Panda] Compile failed: " .. tostring(err)) end
+
     local ok, e = xpcall(fn, debug.traceback)
     if not ok then warn("[Panda] Script error: " .. tostring(e)) end
 end
