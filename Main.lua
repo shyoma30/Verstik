@@ -30,3 +30,4 @@ elseif game.PlaceId == 107535308163741 then -- game
     loadstring(game:HttpGet("Link"))()
 elseif game.PlaceId == 537413528 then -- game
     loadstring(game:HttpGet("Link"))
+end
