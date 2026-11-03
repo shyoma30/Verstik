@@ -1,4 +1,10 @@
+print("versik loader v4")
+
 local FILE = "versik/key.txt"
+
+local function trim(s)
+    return (tostring(s or ""):gsub("%s+", ""))
+end
 
 local okLib, PUSL = pcall(function()
     return loadstring(game:HttpGet("https://secure.pandauth.com/pv4/lib"))()
@@ -9,6 +15,7 @@ end
 PUSL.configure({ serviceId = "verstik" })
 
 local function check(k)
+    if k == "" then return false end
     local ok, r = pcall(PUSL.validate, k)
     return ok and type(r) == "table" and r.success == true
 end
@@ -20,6 +27,13 @@ local function save(k)
     end)
 end
 
+local function readSaved()
+    local ok, d = pcall(function()
+        if isfile and isfile(FILE) then return readfile(FILE) end
+    end)
+    return ok and trim(d) or ""
+end
+
 local function run()
     local urls = {
         [142823291]       = "https://pastebin.com/raw/sCTg2jJc", -- mm2
@@ -27,78 +41,76 @@ local function run()
         [537413528]       = "https://your-real-url-here",
     }
     local u = urls[game.PlaceId]
-    print("place:", game.PlaceId, "url:", u)
-    if not u then return warn("no script for this place") end
-
-    local src = game:HttpGet(u)
-    print("game script bytes:", #src, "head:", src:sub(1, 50))
-    local fn, cerr = loadstring(src)
-    if not fn then return warn("compile: " .. tostring(cerr)) end
-    local ok, err = xpcall(fn, debug.traceback)
-    if not ok then warn("game script: " .. tostring(err)) end
-end
--- env key, then saved key
-local k = getgenv().verstik
-if type(k) ~= "string" or k == "" then
-    local ok, d = pcall(readfile, FILE)
-    k = (ok and type(d) == "string") and d:gsub("%s+", "") or nil
-end
-if type(k) == "string" and k ~= "" and check(k) then
-    save(k)
-    return run()
+    if not u then return warn("[Panda] No script for place " .. game.PlaceId) end
+    local fn, err = loadstring(game:HttpGet(u))
+    if not fn then return warn("[Panda] Compile failed: " .. tostring(err)) end
+    local ok, e = xpcall(fn, debug.traceback)
+    if not ok then warn("[Panda] Script error: " .. tostring(e)) end
 end
 
--- key UI
-local function new(c, p, par)
-    local o = Instance.new(c)
-    for i, v in pairs(p) do o[i] = v end
-    o.Parent = par
-    return o
-end
+local function showUI()
+    local function new(c, p, par)
+        local o = Instance.new(c)
+        for i, v in pairs(p) do o[i] = v end
+        o.Parent = par
+        return o
+    end
 
-local gui = new("ScreenGui", { Name = "VersikKeyUI", ResetOnSpawn = false },
-    (gethui and gethui()) or game:GetService("CoreGui"))
+    local parent = (gethui and gethui()) or game:GetService("CoreGui")
+    local gui = new("ScreenGui", { Name = "VersikKeyUI", ResetOnSpawn = false }, parent)
 
-local f = new("Frame", {
-    AnchorPoint = Vector2.new(.5, .5), Position = UDim2.fromScale(.5, .5),
-    Size = UDim2.fromOffset(320, 120), BackgroundColor3 = Color3.fromRGB(10, 11, 24),
-    Active = true, Draggable = true,
-}, gui)
-new("UICorner", {}, f)
-new("UIStroke", { Color = Color3.fromRGB(70, 140, 255), Thickness = 2 }, f)
+    local f = new("Frame", {
+        AnchorPoint = Vector2.new(.5, .5), Position = UDim2.fromScale(.5, .5),
+        Size = UDim2.fromOffset(320, 120), BackgroundColor3 = Color3.fromRGB(10, 11, 24),
+        Active = true, Draggable = true,
+    }, gui)
+    new("UICorner", {}, f)
+    new("UIStroke", { Color = Color3.fromRGB(70, 140, 255), Thickness = 2 }, f)
 
-local box = new("TextBox", {
-    Position = UDim2.fromOffset(16, 16), Size = UDim2.new(1, -32, 0, 36),
-    BackgroundColor3 = Color3.fromRGB(26, 28, 56), Text = "", PlaceholderText = "paste key",
-    TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.Gotham, TextSize = 13,
-    ClearTextOnFocus = false,
-}, f)
-new("UICorner", {}, box)
+    local box = new("TextBox", {
+        Position = UDim2.fromOffset(16, 16), Size = UDim2.new(1, -32, 0, 36),
+        BackgroundColor3 = Color3.fromRGB(26, 28, 56), Text = "", PlaceholderText = "paste key",
+        TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.Gotham, TextSize = 13,
+        ClearTextOnFocus = false,
+    }, f)
+    new("UICorner", {}, box)
 
-local btn = new("TextButton", {
-    Position = UDim2.fromOffset(16, 64), Size = UDim2.new(1, -32, 0, 38),
-    BackgroundColor3 = Color3.fromRGB(70, 140, 255), Text = "VALIDATE",
-    TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 12,
-}, f)
-new("UICorner", {}, btn)
+    local btn = new("TextButton", {
+        Position = UDim2.fromOffset(16, 64), Size = UDim2.new(1, -32, 0, 38),
+        BackgroundColor3 = Color3.fromRGB(70, 140, 255), Text = "VALIDATE",
+        TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 12,
+    }, f)
+    new("UICorner", {}, btn)
 
-local busy = false
-btn.Activated:Connect(function()
-    if busy then return end
-    local key = box.Text:gsub("%s+", "")
-    if key == "" then return end
-    busy = true
-    btn.Text = "..."
-    task.spawn(function()
-        if check(key) then
-            save(key)
-            gui:Destroy()
-            local ok, err = pcall(run)
-            if not ok then warn("[Panda] Script error: " .. tostring(err)) end
-        else
-            btn.Text = "INVALID"
-            task.wait(1.5)
-            btn.Text, busy = "VALIDATE", false
-        end
+    local busy = false
+    btn.Activated:Connect(function()
+        if busy then return end
+        local key = trim(box.Text)
+        if key == "" then return end
+        busy = true
+        btn.Text = "..."
+        task.spawn(function()
+            if check(key) then
+                save(key)
+                gui:Destroy()
+                run()
+            else
+                btn.Text = "INVALID"
+                task.wait(1.5)
+                btn.Text, busy = "VALIDATE", false
+            end
+        end)
     end)
-end)
+end
+
+-- env key, then saved key, else UI
+local k = trim(getgenv().verstik)
+if not check(k) then
+    k = readSaved()
+    if not check(k) then
+        return showUI()
+    end
+end
+
+save(k)
+run()
