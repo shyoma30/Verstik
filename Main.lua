@@ -1,5 +1,11 @@
 local FILE = "versik/key.txt"
-local PUSL = loadstring(game:HttpGet("https://secure.pandauth.com/pv4/lib"))()
+
+local okLib, PUSL = pcall(function()
+    return loadstring(game:HttpGet("https://secure.pandauth.com/pv4/lib"))()
+end)
+if not okLib or type(PUSL) ~= "table" then
+    return warn("[Panda] Library failed to initialize.")
+end
 PUSL.configure({ serviceId = "verstik" })
 
 local function check(k)
@@ -24,16 +30,18 @@ local function run()
     if u then loadstring(game:HttpGet(u))() end
 end
 
+-- env key, then saved key
 local k = getgenv().verstik
-if not k then
+if type(k) ~= "string" or k == "" then
     local ok, d = pcall(readfile, FILE)
-    k = ok and d:gsub("%s+", "") or nil
+    k = (ok and type(d) == "string") and d:gsub("%s+", "") or nil
 end
 if type(k) == "string" and k ~= "" and check(k) then
     save(k)
     return run()
 end
 
+-- key UI
 local function new(c, p, par)
     local o = Instance.new(c)
     for i, v in pairs(p) do o[i] = v end
@@ -43,6 +51,7 @@ end
 
 local gui = new("ScreenGui", { Name = "VersikKeyUI", ResetOnSpawn = false },
     (gethui and gethui()) or game:GetService("CoreGui"))
+
 local f = new("Frame", {
     AnchorPoint = Vector2.new(.5, .5), Position = UDim2.fromScale(.5, .5),
     Size = UDim2.fromOffset(320, 120), BackgroundColor3 = Color3.fromRGB(10, 11, 24),
@@ -77,7 +86,8 @@ btn.Activated:Connect(function()
         if check(key) then
             save(key)
             gui:Destroy()
-            run()
+            local ok, err = pcall(run)
+            if not ok then warn("[Panda] Script error: " .. tostring(err)) end
         else
             btn.Text = "INVALID"
             task.wait(1.5)
