@@ -27,9 +27,16 @@ local function run()
         [537413528]       = "https://your-real-url-here",
     }
     local u = urls[game.PlaceId]
-    if u then loadstring(game:HttpGet(u))() end
-end
+    print("place:", game.PlaceId, "url:", u)
+    if not u then return warn("no script for this place") end
 
+    local src = game:HttpGet(u)
+    print("game script bytes:", #src, "head:", src:sub(1, 50))
+    local fn, cerr = loadstring(src)
+    if not fn then return warn("compile: " .. tostring(cerr)) end
+    local ok, err = xpcall(fn, debug.traceback)
+    if not ok then warn("game script: " .. tostring(err)) end
+end
 -- env key, then saved key
 local k = getgenv().verstik
 if type(k) ~= "string" or k == "" then
