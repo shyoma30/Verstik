@@ -27,7 +27,7 @@ print("[Panda] Key validated.")
 if game.PlaceId == 142823291 then -- mm2
     loadstring(game:HttpGet('https://pastebin.com/raw/sCTg2jJc'))()
 elseif game.PlaceId == 107535308163741 then -- game
-    loadstring(game:HttpGet("Link"))()
+    loadstring(game:HttpGet("https://your-real-url-here"))()
 elseif game.PlaceId == 537413528 then -- game
-    loadstring(game:HttpGet("Link"))
+    loadstring(game:HttpGet("https://your-real-url-here"))()
 end
