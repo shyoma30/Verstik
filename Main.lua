@@ -37,7 +37,7 @@ end
 local function run()
     local urls = {
         [142823291]       = "https://pastebin.com/raw/sCTg2jJc", -- mm2
-        [107535308163741] = "https://your-real-url-here",
+        [155615604] = "https://raw.githubusercontent.com/shyoma30/Verstik/refs/heads/main/Prisonlife.lua",
         [537413528]       = "https://your-real-url-here",
     }
     local u = urls[game.PlaceId]
